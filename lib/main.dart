@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'src/app.dart';
+import 'app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Supabase.initialize(
-    url: 'https://hssvwlkhhncgwgluciqz.supabase.co', // Settings → API → Project URL
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhzc3Z3bGtoaG5jZ3dnbHVjaXF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTcxMDQsImV4cCI6MjA3MTM3MzEwNH0.NnAHBx7ndqMw3DtbSLl8yhfgwCy3hMQb8XC6sK2CqZ8',            // Settings → API → anon public
+    url: 'https://okvcvfyrbrevsjvysamy.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rdmN2ZnlyYnJldnNqdnlzYW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NTk0ODEsImV4cCI6MjA3MTUzNTQ4MX0.C6DJJv9uDX8Ckd8Tlhmhu_FoadlPI6f1BXav-LyqD7c',
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce, // рекомендовано
+    ),
   );
-  runApp(const App());
+
+  runApp(const MyApp());
 }
