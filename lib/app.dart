@@ -10,11 +10,17 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Mini Instagram',
-      theme: ThemeData(
-        colorSchemeSeed: Colors.blue,
-        useMaterial3: true,
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: StreamBuilder<AuthState>(
+        stream: Supabase.instance.client.auth.onAuthStateChange,
+        builder: (context, snapshot) {
+          final session = Supabase.instance.client.auth.currentSession;
+          // Показываем ленту, если есть активная сессия
+          if (session != null) return const FeedPage();
+          // Иначе — экран логина
+          return const LoginPage();
+        },
       ),
-      home: const _AuthGate(),
     );
   }
 }

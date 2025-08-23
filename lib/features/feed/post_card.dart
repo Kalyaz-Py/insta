@@ -26,33 +26,44 @@ class _PostCardState extends State<PostCard> {
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
-    final pid = widget.post['id'] as int;
+    final postId = widget.post['id'] as int;
     try {
       if (likedByMe) {
-        await supabase.from('likes').delete().match({'user_id': user.id, 'post_id': pid});
+        await supabase.from('likes').delete().match({
+          'user_id': user.id,
+          'post_id': postId,
+        });
         setState(() {
           likedByMe = false;
-          likeCount = (likeCount - 1).clamp(0, 1 << 31);
+          likeCount = (likeCount - 1).clamp(0, 1 << 30);
         });
       } else {
-        await supabase.from('likes').insert({'user_id': user.id, 'post_id': pid});
+        await supabase.from('likes').insert({
+          'user_id': user.id,
+          'post_id': postId,
+        });
         setState(() {
           likedByMe = true;
           likeCount += 1;
         });
       }
+      // Перезагрузим ленту сверху, если передан колбэк
       await widget.onChanged?.call();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ошибка лайка: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка лайка: $e')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authorName = widget.post['author_username'] ?? '';
+    final username = (widget.post['author_username'] ?? '') as String;
     final avatar = widget.post['author_avatar_url'] as String?;
-    final imageUrl = widget.post['image_url'] as String;
+    final imageUrl = widget.post['image_url'] as String? ?? '';
     final caption = widget.post['caption'] as String? ?? '';
+    final created = (widget.post['created_at'] ?? '').toString();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -60,33 +71,36 @@ class _PostCardState extends State<PostCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: CircleAvatar(backgroundImage: (avatar != null && avatar.isNotEmpty) ? NetworkImage(avatar) : null),
-            title: Text(authorName),
+            leading: CircleAvatar(
+              backgroundImage:
+              (avatar != null && avatar.isNotEmpty) ? NetworkImage(avatar) : null,
+              child: (avatar == null || avatar.isEmpty)
+                  ? const Icon(Icons.person)
+                  : null,
+            ),
+            title: Text(username),
+            subtitle: Text(created.replaceFirst('T', ' ').split('.').first),
           ),
-          AspectRatio(
-            aspectRatio: 1,
-            child: Image.network(imageUrl, fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(caption),
-          ),
+          if (imageUrl.isNotEmpty)
+            AspectRatio(
+              aspectRatio: 1,
+              child: Image.network(imageUrl, fit: BoxFit.cover),
+            ),
+          if (caption.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(caption),
+            ),
           Row(
             children: [
               IconButton(
+                tooltip: likedByMe ? 'Убрать лайк' : 'Лайк',
                 onPressed: _toggleLike,
                 icon: Icon(likedByMe ? Icons.favorite : Icons.favorite_border),
                 color: likedByMe ? Colors.red : null,
               ),
               Text('$likeCount'),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Text(
-                  (widget.post['created_at'] ?? '').toString().split('.').first.replaceFirst('T', ' '),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
+              const SizedBox(width: 8),
             ],
           ),
           const SizedBox(height: 6),

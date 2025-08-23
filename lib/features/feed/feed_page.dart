@@ -1,3 +1,4 @@
+import 'package:copiainsta/features/auth/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/supabase_service.dart';
@@ -19,13 +20,18 @@ class _FeedPageState extends State<FeedPage> {
   Future<void> _loadFeed() async {
     setState(() => loading = true);
     try {
-      // Читаем из VIEW feed (колонки уже "раскрыты")
-      final res = await supabase.from('feed').select();
-      posts = res as List<dynamic>;
+      final me = supabase.auth.currentUser!;
+      final data = await supabase.rpc('timeline_feed', params: {
+        '_viewer': me.id,
+        '_limit': 30,
+        '_offset': 0,
+      }) as List<dynamic>;
+
+      setState(() => posts = data);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Не удалось загрузить ленту: $e')));
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Не удалось загрузить ленту: $e')));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -44,10 +50,13 @@ class _FeedPageState extends State<FeedPage> {
 
   void _openProfile() {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePage()));
+    String word = "vatafak";
+    print(word);
   }
 
   Future<void> _signOut() async {
     await supabase.auth.signOut();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));
   }
 
   @override
@@ -56,8 +65,18 @@ class _FeedPageState extends State<FeedPage> {
       appBar: AppBar(
         title: const Text('Лента'),
         actions: [
-          IconButton(onPressed: _openProfile, icon: const Icon(Icons.person_outline)),
-          IconButton(onPressed: _signOut, icon: const Icon(Icons.logout)),
+          // Кнопка Профиля
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: _openProfile,
+            tooltip: 'Профиль',
+          ),
+          // Кнопка Выхода
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _signOut,
+            tooltip: 'Выйти',
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -65,12 +84,23 @@ class _FeedPageState extends State<FeedPage> {
         child: loading
             ? const Center(child: CircularProgressIndicator())
             : ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
           itemCount: posts.length,
-          itemBuilder: (_, i) => PostCard(post: posts[i], onChanged: _loadFeed),
+          itemBuilder: (_, i) {
+            final post = posts[i] as Map<String, dynamic>;
+            return PostCard(
+              post: post,
+              onChanged: _loadFeed, // чтобы счётчик лайков синхронизировался с БД
+            );
+
+          },
         ),
       ),
+
       floatingActionButton: FloatingActionButton(
-        onPressed: _openCreatePost,
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreatePostPage()),
+        ),
         child: const Icon(Icons.add_a_photo),
       ),
     );
