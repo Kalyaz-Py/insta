@@ -18,20 +18,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Future<void> _pick() async {
     final picker = ImagePicker();
-    final XFile? img = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-
-    if (img == null) return;
-
-    // дождались байтов ЗА ПРЕДЕЛАМИ setState
-    final bytes = await img.readAsBytes();
-
-    if (!mounted) return; // на всякий случай, если экран уже закрыт
-    setState(() {
-      _bytes = bytes; // синхронное присваивание
-    });
+    final img = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (img != null) {
+      final bytes = await img.readAsBytes();
+      setState(() => _bytes = bytes);
+    }
   }
 
   Future<void> _publish() async {

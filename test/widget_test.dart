@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 
 import 'package:insta/src/app.dart';
@@ -14,6 +15,9 @@ import 'package:insta/src/app.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
+
+    await Supabase.initialize(url: 'https://hssvwlkhhncgwgluciqz.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhzc3Z3bGtoaG5jZ3dnbHVjaXF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3OTcxMDQsImV4cCI6MjA3MTM3MzEwNH0.NnAHBx7ndqMw3DtbSLl8yhfgwCy3hMQb8XC6sK2CqZ8');
+
     await tester.pumpWidget(const App());
 
     // Verify that our counter starts at 0.
