@@ -26,19 +26,18 @@ class _FeedPageState extends State<FeedPage> {
     final ids = (posts as List).map((p) => p['id'] as int).toList();
     Map<int, bool> liked = {};
     if (ids.isNotEmpty) {
-      final my = await supabase
+      final List<dynamic> my = await supabase
           .from('likes')
           .select('post_id')
-          .in_('post_id', ids);
-      for (final row in (my as List)) {
+          .inFilter('post_id', ids);
+      for (final row in my) {
         liked[row['post_id'] as int] = true;
       }
+      setState(() {
+        _posts = posts;
+        _liked = liked;
+      });
     }
-    setState(() {
-      _posts = posts;
-      _liked = liked;
-    });
-  }
 
   Future<void> _toggleLike(int postId) async {
     final isLiked = _liked[postId] == true;
