@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/supabase_service.dart';
 import 'edit_profile_page.dart';
+import 'my_posts_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -108,7 +109,13 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: _edit,
               child: const Text('Редактировать профиль'),
             ),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPostsPage())),
+              child: const Text('Мои посты'),
+            ),
+
           ],
+
         ),
       ),
     );
