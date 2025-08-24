@@ -47,13 +47,13 @@ class _CreatePostPageState extends State<CreatePostPage> {
         await supabase.storage.from('images').uploadBinary(
           path,
           bytes,
-          // без fileOptions — совместимо с 2.x
+
         );
       } else {
         await supabase.storage.from('images').upload(
           path,
           File(picked!.path),
-          // без fileOptions — совместимо с 2.x
+
         );
       }
 
