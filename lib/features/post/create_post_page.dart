@@ -40,7 +40,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     setState(() => loading = true);
     try {
       final id = const Uuid().v4();
-      final path = 'posts/${user.id}/$id.jpg'; // расширение подскажет content-type
+      final path = 'posts/${user.id}/$id.jpg';
 
       if (kIsWeb) {
         final bytes = await picked!.readAsBytes();
