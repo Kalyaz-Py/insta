@@ -39,12 +39,6 @@ class _MyPostsPageState extends State<MyPostsPage> {
     _load();
   }
 
-  void _openDetails(Map<String, dynamic> post) {
-    // ТВОЁ МЕСТО: здесь делай push на свой экран детали
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => PostDetailsPage(post: post)));
-    // или покажи bottom sheet:
-    // showModalBottomSheet(context: context, builder: (_) => YourDetails(post: post));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +62,7 @@ class _MyPostsPageState extends State<MyPostsPage> {
                 : const SizedBox(width: 56, height: 56),
             title: Text((p['caption'] as String?)?.isNotEmpty == true ? p['caption'] : 'Без подписи'),
             subtitle: Text('Лайков: ${p['like_count'] ?? 0}   •   ${(p['created_at'] ?? '').toString().split(".").first.replaceFirst("T", " ")}'),
-            trailing: TextButton(
-              onPressed: () => _openDetails(p),
-              child: const Text('Подробнее'),
-            ),
+
           );
         },
       ),
