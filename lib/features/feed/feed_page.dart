@@ -56,7 +56,9 @@ class _FeedPageState extends State<FeedPage> {
 
   Future<void> _signOut() async {
     await supabase.auth.signOut();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginPage()));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+    );
   }
 
   @override

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../services/supabase_service.dart';
+import '../common/follow_button.dart';
 
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
   final Future<void> Function()? onChanged;
 
-  const PostCard({super.key, required this.post, this.onChanged});
+  const PostCard({
+    super.key,
+    required this.post,
+    this.onChanged,
+  });
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -26,84 +31,137 @@ class _PostCardState extends State<PostCard> {
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
-    final postId = widget.post['id'] as int;
+    final postId = widget.post['id'];
     try {
       if (likedByMe) {
-        await supabase.from('likes').delete().match({
-          'user_id': user.id,
-          'post_id': postId,
-        });
+        // оптимистичное обновление
         setState(() {
           likedByMe = false;
           likeCount = (likeCount - 1).clamp(0, 1 << 30);
         });
-      } else {
-        await supabase.from('likes').insert({
+        await supabase.from('likes').delete().match({
           'user_id': user.id,
           'post_id': postId,
         });
+      } else {
         setState(() {
           likedByMe = true;
           likeCount += 1;
         });
+        await supabase.from('likes').insert({
+          'user_id': user.id,
+          'post_id': postId,
+        });
       }
-      // Перезагрузим ленту сверху, если передан колбэк
-      await widget.onChanged?.call();
+
+      // если нужно синхронизировать с БД/рефрешнуть ленту
+      // await widget.onChanged?.call();
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка лайка: $e')),
-      );
+      // откат при ошибке
+      setState(() {
+        if (likedByMe) {
+          likedByMe = false;
+          likeCount = (likeCount - 1).clamp(0, 1 << 30);
+        } else {
+          likedByMe = true;
+          likeCount += 1;
+        }
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка лайка: $e')),
+        );
+      }
     }
+  }
+
+  Widget _header({
+    required String username,
+    required String? avatarUrl,
+    required String? authorId,
+    required String createdText,
+  }) {
+    return Stack(
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          leading: CircleAvatar(
+            backgroundImage:
+            (avatarUrl != null && avatarUrl.isNotEmpty) ? NetworkImage(avatarUrl) : null,
+            child: (avatarUrl == null || avatarUrl.isEmpty)
+                ? const Icon(Icons.person)
+                : null,
+          ),
+          title: Text(username, overflow: TextOverflow.ellipsis),
+          subtitle: Text(
+            createdText,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ),
+        if (authorId != null && authorId.isNotEmpty)
+          Positioned(
+            right: 12,
+            top: 8,
+            child: FollowButton(authorId: authorId),
+          ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final username = (widget.post['author_username'] ?? '') as String;
     final avatar = widget.post['author_avatar_url'] as String?;
-    final imageUrl = widget.post['image_url'] as String? ?? '';
-    final caption = widget.post['caption'] as String? ?? '';
-    final created = (widget.post['created_at'] ?? '').toString();
+    final authorId = widget.post['author_id']?.toString();
+    final imageUrl = (widget.post['image_url'] ?? '') as String;
+    final caption = (widget.post['caption'] ?? '') as String;
+    final createdText = (widget.post['created_at'] ?? '')
+        .toString()
+        .replaceFirst('T', ' ')
+        .split('.')
+        .first;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      elevation: 1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage:
-              (avatar != null && avatar.isNotEmpty) ? NetworkImage(avatar) : null,
-              child: (avatar == null || avatar.isEmpty)
-                  ? const Icon(Icons.person)
-                  : null,
-            ),
-            title: Text(username),
-            subtitle: Text(created.replaceFirst('T', ' ').split('.').first),
+          _header(
+            username: username,
+            avatarUrl: avatar,
+            authorId: authorId,
+            createdText: createdText,
           ),
+
           if (imageUrl.isNotEmpty)
             AspectRatio(
               aspectRatio: 1,
               child: Image.network(imageUrl, fit: BoxFit.cover),
             ),
+
           if (caption.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: Text(caption),
             ),
-          Row(
-            children: [
-              IconButton(
-                tooltip: likedByMe ? 'Убрать лайк' : 'Лайк',
-                onPressed: _toggleLike,
-                icon: Icon(likedByMe ? Icons.favorite : Icons.favorite_border),
-                color: likedByMe ? Colors.red : null,
-              ),
-              Text('$likeCount'),
-              const SizedBox(width: 8),
-            ],
+
+          // лайк + счётчик
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: likedByMe ? 'Убрать лайк' : 'Лайк',
+                  onPressed: _toggleLike,
+                  icon: Icon(likedByMe ? Icons.favorite : Icons.favorite_border),
+                  color: likedByMe ? Colors.red : null,
+                ),
+                Text('$likeCount'),
+                const Spacer(),
+              ],
+            ),
           ),
-          const SizedBox(height: 6),
         ],
       ),
     );

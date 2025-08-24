@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/supabase_service.dart';
 import 'edit_profile_page.dart';
+import 'my_posts_page.dart';
+import 'people_list_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -98,9 +100,43 @@ class _ProfilePageState extends State<ProfilePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Подписчики: $followers'),
-                const SizedBox(width: 16),
-                Text('Подписки: $following'),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PeopleListPage(kind: PeopleKind.followers),
+                      ),
+                    );
+                  },
+                  child:  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Подписчики'),
+                      Text('$followers'),
+                    ],
+                  ),
+                ),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PeopleListPage(kind: PeopleKind.following),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Подписки'),
+                      Text('$following'),
+
+                    ],
+                  ),
+
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -108,7 +144,13 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: _edit,
               child: const Text('Редактировать профиль'),
             ),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPostsPage())),
+              child: const Text('Мои посты'),
+            ),
+
           ],
+
         ),
       ),
     );
